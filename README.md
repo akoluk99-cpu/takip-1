@@ -14,6 +14,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 #top{padding:8px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #333}
 #tot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;color:#aaa}
 #tot b{color:#fff;font-weight:500}
+#st{font-size:12px}
+#st.on{color:#5DCAA5}#st.off{color:#F09595}
+#warn{display:none;background:#3a2a0c;border:1px solid #BA7517;border-radius:8px;padding:8px;font-size:14px;color:#EF9F27}
 .bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .bar{background:#1b1b1b;border:1px solid #333;border-radius:10px;padding:8px}
 .bar .n{font-size:12px;color:#aaa}
@@ -32,7 +35,7 @@ td{padding:5px 6px;border-bottom:1px solid #262626;vertical-align:middle}
 th.pos{z-index:4;background:#1b1b1b}
 .ed{width:100%;background:transparent;border:1px solid transparent;padding:4px 6px}
 .ed:focus{border-color:#378ADD;background:#222;outline:none}
-.sub{font-size:12px;color:#999;padding-top:0}
+.sub{font-size:12px;color:#999}
 .num{width:72px;text-align:right}
 .tw{font-weight:500;white-space:nowrap;text-align:right;padding-right:12px}
 .sc{display:flex;align-items:center;gap:4px;padding:2px 4px;border-radius:8px;background:#1b1b1b;border:1px solid #333;width:max-content}
@@ -46,7 +49,8 @@ th.pos{z-index:4;background:#1b1b1b}
 .empty{text-align:center;color:#888;padding:24px}
 </style></head><body>
 <div id="top">
-<div id="tot"><span>Toplam ağırlık <b id="tw"></b></span><span><b id="tq"></b> adet · <b id="tn"></b> kalem</span></div>
+<div id="warn">Veritabanı adresi girilmemiş. Kodda BURAYA_URL_YAPISTIR yazan yere Firebase adresini yapıştır.</div>
+<div id="tot"><span>Toplam ağırlık <b id="tw"></b></span><span><b id="tq"></b> adet · <b id="tn"></b> kalem</span><span id="st" class="off">○ Bağlanıyor…</span></div>
 <div class="bars" id="bars"></div>
 <div class="tools">
 <input id="q" type="search" placeholder="Assembly ara">
@@ -60,10 +64,12 @@ th.pos{z-index:4;background:#1b1b1b}
 </div>
 <div id="wrap"><table>
 <thead><tr><th class="pos">Assembly</th><th>Adet</th><th>Birim kg</th><th>Toplam kg</th><th>İmalat</th><th>Boya</th><th>Sevkiyat</th><th></th></tr></thead>
-<tbody id="tb"></tbody></table></div>
+<tbody id="tb"><tr><td colspan="8" class="empty">Yükleniyor…</td></tr></tbody></table></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const KEY='assembly_takip_v1';
+const DB_URL='https://takip-85fe0-default-rtdb.europe-west1.firebasedatabase.app/';
 const ST=['İmalat','Boya','Sevkiyat'],COL=['#378ADD','#BA7517','#1D9E75'];
 const RAW=`MBS/1|BAKLA PL4*262|1|13.4
 MBS/2|BAKLA PL4*1200|61|16.3
@@ -111,23 +117,20 @@ MKL/4|KOLON HEA200|1|262.1
 MKL/5|KOLON HEA200|1|204.8
 MKL/6|KOLON HEA200|1|204.8`;
 
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const num=v=>parseFloat(String(v).replace(',','.'))||0;
 const f1=n=>n.toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-function norm(x){
+function norm(id,x){
   const qty=Math.max(1,Math.round(+x.qty||1));
-  const d=[0,1,2].map(i=>Math.min(qty,Math.max(0,Math.round(+(x.d&&x.d[i])||0))));
-  return{id:String(x.id||uid()),pos:String(x.pos||''),info:String(x.info||''),qty,w:Math.max(0,+x.w||0),d};
+  const d=[0,1,2].map(i=>Math.min(qty,Math.max(0,Math.round(+x['d'+i]||0))));
+  return{id:id,pos:String(x.pos||''),info:String(x.info||''),qty:qty,w:Math.max(0,+x.w||0),d:d,o:+x.o||0};
 }
+const toDb=r=>({pos:r.pos,info:r.info,qty:r.qty,w:r.w,d0:r.d[0],d1:r.d[1],d2:r.d[2],o:r.o});
 function defaults(){
-  return RAW.split('\n').map(l=>{const a=l.split('|');return norm({pos:a[0],info:a[1],qty:a[2],w:a[3]})});
+  return RAW.split('\n').map((l,i)=>{const a=l.split('|');return norm('m'+String(i).padStart(3,'0'),{pos:a[0],info:a[1],qty:a[2],w:a[3],o:i})});
 }
-let rows=null;
-try{rows=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-rows=Array.isArray(rows)?rows.map(norm):defaults();
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(rows))}catch(e){}};
 
+let rows=[],R=null,lastKey=null;
 $('bars').innerHTML=ST.map((n,s)=>'<div class="bar"><div class="n">'+n+'</div><div class="p" id="p'+s+'"></div><div class="track"><div class="fill" id="f'+s+'" style="background:'+COL[s]+'"></div></div><div class="k" id="k'+s+'"></div></div>').join('');
 
 function summary(){
@@ -143,11 +146,12 @@ function summary(){
   }
 }
 function paint(tr,r,force){
+  const setv=(i,v)=>{if(force||document.activeElement!==i)i.value=v};
   tr.querySelector('.tw').textContent=f1(r.qty*r.w);
+  tr.querySelectorAll('[data-f]').forEach(i=>setv(i,r[i.dataset.f]));
   tr.querySelectorAll('.sc').forEach(c=>{
     const s=+c.dataset.s,v=r.d[s],i=c.querySelector('.sin');
-    if(force||document.activeElement!==i)i.value=v;
-    i.max=r.qty;
+    setv(i,v);i.max=r.qty;
     c.querySelector('.of').textContent='/'+r.qty;
     c.className='sc'+(v>=r.qty?' full':v>0?' part':'');
   });
@@ -155,8 +159,8 @@ function paint(tr,r,force){
 function rowEl(r){
   const tr=document.createElement('tr');tr.dataset.id=r.id;
   tr.innerHTML='<td class="pos"><input class="ed" data-f="pos" value="'+esc(r.pos)+'"><input class="ed sub" data-f="info" value="'+esc(r.info)+'"></td>'
-  +'<td><input class="ed num" data-f="qty" type="number" inputmode="numeric" min="1" value="'+r.qty+'"></td>'
-  +'<td><input class="ed num" data-f="w" type="number" inputmode="decimal" step="0.1" min="0" value="'+r.w+'"></td>'
+  +'<td><input class="ed num" data-f="qty" type="number" inputmode="numeric" min="1"></td>'
+  +'<td><input class="ed num" data-f="w" type="number" inputmode="decimal" step="0.1" min="0"></td>'
   +'<td class="tw"></td>'
   +[0,1,2].map(s=>'<td><div class="sc" data-s="'+s+'"><input class="sin" type="number" inputmode="numeric" min="0"><span class="of"></span><button data-ok="'+s+'" aria-label="'+ST[s]+' tamam">✓</button></div></td>').join('')
   +'<td><button class="x" data-del="1" aria-label="Sil">×</button></td>';
@@ -175,49 +179,98 @@ function render(){
   list.forEach(r=>tb.append(rowEl(r)));
   if(!list.length)tb.innerHTML='<tr><td colspan="8" class="empty">Kayıt yok</td></tr>';
 }
-const getRow=el=>{const tr=el.closest('tr');return tr&&tr.dataset.id?[tr,rows.find(x=>x.id===tr.dataset.id)]:[null,null]};
+function sync(){
+  summary();
+  const key=rows.map(r=>r.id).join(',');
+  if(key!==lastKey){lastKey=key;render();return}
+  $('tb').querySelectorAll('tr[data-id]').forEach(tr=>{
+    const r=rows.find(x=>x.id===tr.dataset.id);if(r)paint(tr,r,false);
+  });
+}
 
+if(DB_URL.indexOf('BURAYA')>=0){
+  $('warn').style.display='block';
+  $('tb').innerHTML='<tr><td colspan="8" class="empty">Veritabanı bağlı değil</td></tr>';
+}else{
+  firebase.initializeApp({databaseURL:DB_URL});
+  const db=firebase.database();R=db.ref('rows');
+  db.ref('.info/connected').on('value',s=>{
+    $('st').textContent=s.val()?'● Canlı':'○ Bağlantı yok';
+    $('st').className=s.val()?'on':'off';
+  });
+  db.ref('meta/seeded').once('value').then(s=>{
+    if(s.val()===true)return;
+    const o={};defaults().forEach(r=>o[r.id]=toDb(r));
+    return R.update(o).then(()=>db.ref('meta/seeded').set(true));
+  }).catch(()=>{});
+  R.on('value',snap=>{
+    const v=snap.val()||{};
+    rows=Object.keys(v).map(id=>norm(id,v[id])).sort((a,b)=>a.o-b.o);
+    sync();
+  },()=>{
+    $('st').textContent='○ Erişim izni yok (Rules ayarını kontrol et)';$('st').className='off';
+  });
+}
+
+function getRow(el){
+  const tr=el.closest('tr');
+  if(!tr||!tr.dataset.id)return[null,null];
+  return[tr,rows.find(x=>x.id===tr.dataset.id)];
+}
 $('tb').addEventListener('input',e=>{
-  const t=e.target,[tr,r]=getRow(t);if(!r)return;
-  const f=t.dataset.f;
-  if(f==='pos'||f==='info')r[f]=t.value;
-  else if(f==='qty'){r.qty=Math.max(1,Math.round(num(t.value))||1);r.d=r.d.map(x=>Math.min(x,r.qty))}
-  else if(f==='w')r.w=Math.max(0,num(t.value));
-  else if(t.classList.contains('sin')){const s=+t.closest('.sc').dataset.s;r.d[s]=Math.min(r.qty,Math.max(0,Math.round(num(t.value))))}
-  else return;
-  paint(tr,r);summary();save();
+  if(!R)return;
+  const t=e.target,r=getRow(t)[1];if(!r)return;
+  const f=t.dataset.f,ref=R.child(r.id);
+  if(f==='pos'||f==='info'){const u={};u[f]=t.value;ref.update(u)}
+  else if(f==='qty'){
+    if(t.value==='')return;
+    const q=Math.max(1,Math.round(num(t.value))||1);
+    ref.update({qty:q,d0:Math.min(r.d[0],q),d1:Math.min(r.d[1],q),d2:Math.min(r.d[2],q)});
+  }else if(f==='w'){
+    if(t.value==='')return;
+    ref.update({w:Math.max(0,num(t.value))});
+  }else if(t.classList.contains('sin')){
+    if(t.value==='')return;
+    const s=+t.closest('.sc').dataset.s,u={};
+    u['d'+s]=Math.min(r.qty,Math.max(0,Math.round(num(t.value))));
+    ref.update(u);
+  }
 });
 $('tb').addEventListener('change',e=>{
-  const t=e.target,[tr,r]=getRow(t);if(!r)return;
-  if(t.dataset.f==='qty')t.value=r.qty;
-  if(t.dataset.f==='w')t.value=r.w;
-  paint(tr,r,true);
+  const[tr,r]=getRow(e.target);if(r)paint(tr,r,true);
 });
 $('tb').addEventListener('click',e=>{
+  if(!R)return;
   const b=e.target.closest('button');if(!b)return;
-  const [tr,r]=getRow(b);if(!r)return;
+  const r=getRow(b)[1];if(!r)return;
   if(b.dataset.ok!==undefined){
-    const s=+b.dataset.ok;r.d[s]=r.d[s]>=r.qty?0:r.qty;paint(tr,r,true);
+    const s=+b.dataset.ok,u={};
+    u['d'+s]=r.d[s]>=r.qty?0:r.qty;
+    R.child(r.id).update(u);
   }else if(b.dataset.del){
-    if(!confirm('"'+r.pos+'" silinsin mi?'))return;
-    rows=rows.filter(x=>x!==r);tr.remove();
-  }else return;
-  summary();save();
+    if(!confirm('"'+r.pos+'" silinsin mi? Bu herkesten silinir.'))return;
+    R.child(r.id).remove();
+  }
 });
 
 $('q').oninput=render;
 $('fl').onchange=render;
 $('add').onclick=()=>{
-  rows.push(norm({pos:'YENİ',info:'',qty:1,w:0}));
-  $('q').value='';$('fl').value='all';render();summary();save();
-  const tr=$('tb').lastElementChild;tr.scrollIntoView({block:'center'});
-  const i=tr.querySelector('[data-f=pos]');i.focus();i.select();
+  if(!R)return;
+  const o=rows.reduce((m,r)=>Math.max(m,r.o),0)+1;
+  $('q').value='';$('fl').value='all';
+  const ref=R.push(toDb({pos:'YENİ',info:'',qty:1,w:0,d:[0,0,0],o:o}));
+  const id=ref.key;
+  setTimeout(()=>{
+    const tr=$('tb').querySelector('[data-id="'+id+'"]');
+    if(tr){tr.scrollIntoView({block:'center'});const i=tr.querySelector('[data-f=pos]');i.focus();i.select()}
+  },150);
 };
 function dl(name,text,type){
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:type}));
   a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
-$('bk').onclick=()=>dl('assembly_takip.json',JSON.stringify(rows),'application/json');
+$('bk').onclick=()=>dl('assembly_takip.json',JSON.stringify(rows.map(r=>({pos:r.pos,info:r.info,qty:r.qty,w:r.w,d:r.d}))),'application/json');
 $('csv').onclick=()=>{
   const n=x=>String(x).replace('.',','),q=v=>'"'+String(v).replace(/"/g,'""')+'"';
   const L=['Assembly;Bilgi;Adet;Birim kg;Toplam kg;İmalat;Boya;Sevkiyat'];
@@ -225,16 +278,21 @@ $('csv').onclick=()=>{
   dl('assembly_takip.csv','\ufeff'+L.join('\r\n'),'text/csv');
 };
 $('imp').onchange=e=>{
-  const f=e.target.files[0];if(!f)return;
+  const f=e.target.files[0];if(!f||!R)return;
   const rd=new FileReader();
   rd.onload=()=>{
     try{
       const a=JSON.parse(rd.result);if(!Array.isArray(a))throw 0;
-      if(!confirm(a.length+' kayıt yüklenecek, mevcut liste silinecek. Devam edilsin mi?'))return;
-      rows=a.map(norm);save();render();summary();
+      if(!confirm(a.length+' kayıt yüklenecek. Herkesteki mevcut liste silinip bununla değişecek. Devam edilsin mi?'))return;
+      const o={},stamp=Date.now().toString(36);
+      a.forEach((x,i)=>{
+        const d=x.d||[];
+        const r=norm('i'+stamp+String(i).padStart(3,'0'),{pos:x.pos,info:x.info,qty:x.qty,w:x.w,d0:d[0],d1:d[1],d2:d[2],o:i});
+        o[r.id]=toDb(r);
+      });
+      R.set(o);
     }catch(_){alert('Dosya okunamadı')}
   };
   rd.readAsText(f);e.target.value='';
 };
-summary();render();
 </script></body></html>
