@@ -11,11 +11,15 @@ button,.btn,input,select,textarea{font:inherit;font-size:15px;color:#eee;backgro
 button:active,.btn:active{background:#444}
 input[type=number]{-moz-appearance:textfield}
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+body.ro .adm{display:none!important}
+body.ro .ed:focus{border-color:transparent;background:transparent}
+body.ro .sin:focus{outline:none}
 #top{padding:8px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #333}
 #tot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;color:#aaa}
 #tot b{color:#fff;font-weight:500}
 #st{font-size:12px}
 #st.on{color:#5DCAA5}#st.off{color:#F09595}
+#who{font-size:12px;color:#888}
 #warn{display:none;background:#3a2a0c;border:1px solid #BA7517;border-radius:8px;padding:8px;font-size:14px;color:#EF9F27}
 .bars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .bar{background:#1b1b1b;border:1px solid #333;border-radius:10px;padding:8px}
@@ -24,7 +28,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 .bar .k{font-size:11px;color:#888}
 .track{height:6px;background:#333;border-radius:3px;margin:4px 0;overflow:hidden}
 .fill{height:100%;width:0;border-radius:3px;transition:width .2s}
-.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .tools input[type=search]{flex:1;min-width:0}
 .tools button,.tools .btn{padding:6px 12px;font-size:14px}
 #ls{flex:1;min-width:0;font-weight:500}
@@ -48,36 +52,46 @@ th.pos{z-index:4;background:#1b1b1b}
 .sc button{padding:3px 9px}
 .x{padding:3px 10px;color:#f09595}
 .empty{text-align:center;color:#888;padding:24px}
-#imd{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;align-items:flex-end}
-#imd.on{display:flex}
-#imc{width:100%;max-height:92dvh;overflow-y:auto;background:#222;border-top:1px solid #555;padding:12px;display:flex;flex-direction:column;gap:8px}
-#imc input,#imc select,#imc textarea{width:100%}
+#imd,#lg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:20;align-items:flex-end}
+#imd.on,#lg.on{display:flex}
+#imc,#lc{width:100%;max-height:92dvh;overflow-y:auto;background:#222;border-top:1px solid #555;padding:12px;display:flex;flex-direction:column;gap:8px}
+#imc input,#imc select,#imc textarea,#lc input{width:100%}
 #imc label.l{font-size:13px;color:#aaa}
 #ist{font-size:13px;color:#aaa}
 #prev{white-space:pre-line;font-size:13px;color:#ccc}
+#lerr{color:#f09595;font-size:14px;min-height:18px}
 .row{display:flex;gap:8px}
 .row button{flex:1}
-</style></head><body>
+</style></head><body class="ro">
 <div id="top">
-<div id="warn">Veritabanı adresi girilmemiş. Kodda BURAYA_URL_YAPISTIR yazan yere Firebase adresini yapıştır.</div>
+<div id="warn">Veritabanı adresi ya da API anahtarı girilmemiş. Kodda BURAYA_ ile başlayan iki yeri doldur.</div>
 <div id="tot"><span>Toplam ağırlık <b id="tw"></b></span><span><b id="tq"></b> adet · <b id="tn"></b> kalem</span><span id="st" class="off">○ Bağlanıyor…</span></div>
 <div class="bars" id="bars"></div>
 <div class="tools">
 <select id="ls"></select>
-<button id="nl">+ Liste</button><button id="mo" aria-label="Diğer işlemler">⋯</button>
+<button id="nl" class="adm">+ Liste</button><button id="mo" aria-label="Diğer işlemler">⋯</button>
 </div>
 <div class="tools" id="more" style="display:none">
-<button id="rn">Adlandır</button><button id="dl">Listeyi sil</button><button id="bk">Yedekle</button><button id="csv">Excel indir</button>
+<button id="rn" class="adm">Adlandır</button><button id="dl" class="adm">Listeyi sil</button><button id="bk">Yedekle</button><button id="csv">Excel indir</button>
 </div>
 <div class="tools">
 <input id="q" type="search" placeholder="Assembly ara">
 <select id="fl"><option value="all">Tümü</option><option value="0">İmalatı bitmeyen</option><option value="1">Boyası bitmeyen</option><option value="2">Sevkiyatı bitmeyen</option><option value="sent">Sevk edilenler</option></select>
 </div>
-<div class="tools"><button id="add">+ Satır</button><button id="imp">İçe aktar (Word / Excel)</button></div>
+<div class="tools adm"><button id="add">+ Satır</button><button id="imp">İçe aktar (Word / Excel)</button></div>
+<div class="tools" style="justify-content:space-between"><span id="who">Salt okunur</span><button id="lgn">Yönetici girişi</button></div>
 </div>
 <div id="wrap"><table>
-<thead><tr><th class="pos">Assembly</th><th>Adet</th><th>Birim kg</th><th>Toplam kg</th><th>İmalat</th><th>Boya</th><th>Sevkiyat</th><th></th></tr></thead>
+<thead><tr><th class="pos">Assembly</th><th>Adet</th><th>Birim kg</th><th>Toplam kg</th><th>İmalat</th><th>Boya</th><th>Sevkiyat</th><th class="adm"></th></tr></thead>
 <tbody id="tb"><tr><td colspan="8" class="empty">Yükleniyor…</td></tr></tbody></table></div>
+
+<div id="lg"><div id="lc">
+<b>Yönetici girişi</b>
+<input id="lem" type="email" placeholder="E-posta" autocomplete="username">
+<input id="lpw" type="password" placeholder="Şifre" autocomplete="current-password">
+<div id="lerr"></div>
+<div class="row"><button id="lok">Giriş</button><button id="lx">İptal</button></div>
+</div></div>
 
 <div id="imd"><div id="imc">
 <b>Listeye içe aktar</b>
@@ -95,11 +109,13 @@ th.pos{z-index:4;background:#1b1b1b}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const DB_URL='https://takip-85fe0-default-rtdb.europe-west1.firebasedatabase.app/';
+const API_KEY='AIzaSyAE7uZifaQRgXZbKbCo6JPrMnd0zdiiHl8';
 const ST=['İmalat','Boya','Sevkiyat'],COL=['#378ADD','#BA7517','#1D9E75'];
 
 function parseNum(v){
@@ -121,7 +137,12 @@ function norm(id,x){
 }
 const toDb=r=>({pos:r.pos,info:r.info,qty:r.qty,w:r.w,d0:r.d[0],d1:r.d[1],d2:r.d[2],o:r.o});
 
-let db=null,R=null,cur=null,want=null,rows=[],lists=[],lastKey=null;
+let db=null,auth=null,R=null,cur=null,want=null,rows=[],lists=[],lastKey=null;
+const RO=()=>!(auth&&auth.currentUser);
+function W(p){
+  if(p&&p.catch)p.catch(()=>{$('st').textContent='○ Bu hesabın düzenleme izni yok';$('st').className='off'});
+  return p;
+}
 $('bars').innerHTML=ST.map((n,s)=>'<div class="bar"><div class="n">'+n+'</div><div class="p" id="p'+s+'"></div><div class="track"><div class="fill" id="f'+s+'" style="background:'+COL[s]+'"></div></div><div class="k" id="k'+s+'"></div></div>').join('');
 
 function summary(){
@@ -153,9 +174,11 @@ function rowEl(r){
   +'<td><input class="ed num" data-f="qty" type="number" inputmode="numeric" min="1"></td>'
   +'<td><input class="ed num" data-f="w" type="number" inputmode="decimal" step="0.1" min="0"></td>'
   +'<td class="tw"></td>'
-  +[0,1,2].map(s=>'<td><div class="sc" data-s="'+s+'"><input class="sin" type="number" inputmode="numeric" min="0"><span class="of"></span><button data-ok="'+s+'" aria-label="'+ST[s]+' tamam">✓</button></div></td>').join('')
-  +'<td><button class="x" data-del="1" aria-label="Sil">×</button></td>';
-  paint(tr,r,true);return tr;
+  +[0,1,2].map(s=>'<td><div class="sc" data-s="'+s+'"><input class="sin" type="number" inputmode="numeric" min="0"><span class="of"></span><button class="adm" data-ok="'+s+'" aria-label="'+ST[s]+' tamam">✓</button></div></td>').join('')
+  +'<td class="adm"><button class="x" data-del="1" aria-label="Sil">×</button></td>';
+  paint(tr,r,true);
+  if(RO())tr.querySelectorAll('input').forEach(i=>i.readOnly=true);
+  return tr;
 }
 function visible(r){
   const q=$('q').value.trim().toLocaleLowerCase('tr'),fl=$('fl').value;
@@ -189,14 +212,14 @@ function selectList(id){
   if(R)R.off('value',rowsH);
   cur=id;R=null;rows=[];lastKey=null;summary();
   if(!id){
-    $('tb').innerHTML='<tr><td colspan="8" class="empty">Liste yok. "+ Liste" ile yeni liste oluştur ya da içe aktar.</td></tr>';
+    $('tb').innerHTML='<tr><td colspan="8" class="empty">Henüz liste yok.</td></tr>';
     return;
   }
   try{localStorage.setItem('son_liste',id)}catch(e){}
   try{history.replaceState(null,'','#'+encodeURIComponent(id))}catch(e){}
   $('tb').innerHTML='<tr><td colspan="8" class="empty">Yükleniyor…</td></tr>';
   R=db.ref('listRows/'+id);
-  R.on('value',rowsH,()=>{$('st').textContent='○ Erişim izni yok (Rules ayarını kontrol et)';$('st').className='off'});
+  R.on('value',rowsH,()=>{$('st').textContent='○ Okuma izni yok (Rules ayarını kontrol et)';$('st').className='off'});
 }
 function chooseCurrent(){
   let t=null;
@@ -218,34 +241,32 @@ const maxO=a=>a.reduce((m,x)=>Math.max(m,x.o||0),0);
 
 $('ls').onchange=()=>pick($('ls').value);
 $('nl').onclick=()=>{
-  if(!db)return;
+  if(!db||RO())return;
   const n=(prompt('Yeni liste adı')||'').trim();if(!n)return;
   const id='l'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-  db.ref('listMeta/'+id).set({name:n,o:maxO(lists)+1});pick(id);
+  W(db.ref('listMeta/'+id).set({name:n,o:maxO(lists)+1}));pick(id);
 };
 $('mo').onclick=()=>{const m=$('more');m.style.display=m.style.display==='none'?'flex':'none'};
 $('rn').onclick=()=>{
-  if(!cur)return;
+  if(!cur||RO())return;
   const n=(prompt('Liste adı',curName())||'').trim();if(!n)return;
-  db.ref('listMeta/'+cur+'/name').set(n);
+  W(db.ref('listMeta/'+cur+'/name').set(n));
 };
 $('dl').onclick=()=>{
-  if(!cur)return;
+  if(!cur||RO())return;
   if(!confirm('"'+curName()+'" listesi ve içindeki '+rows.length+' satır herkesten silinsin mi? Bu işlem geri alınamaz.'))return;
-  const id=cur;db.ref('listMeta/'+id).remove();db.ref('listRows/'+id).remove();
+  const id=cur;W(db.ref('listMeta/'+id).remove());W(db.ref('listRows/'+id).remove());
 };
 
-/* ---------- firebase ---------- */
-if(DB_URL.indexOf('BURAYA')>=0){
-  $('warn').style.display='block';
-  $('tb').innerHTML='<tr><td colspan="8" class="empty">Veritabanı bağlı değil</td></tr>';
-}else{
-  firebase.initializeApp({databaseURL:DB_URL});
-  db=firebase.database();
-  db.ref('.info/connected').on('value',s=>{
-    $('st').textContent=s.val()?'● Canlı':'○ Bağlantı yok';
-    $('st').className=s.val()?'on':'off';
-  });
+/* ---------- giriş ---------- */
+function applyMode(){
+  const a=!RO();
+  document.body.classList.toggle('ro',!a);
+  $('lgn').textContent=a?'Çıkış':'Yönetici girişi';
+  $('who').textContent=a?'Yönetici: '+auth.currentUser.email:'Salt okunur';
+  if(cur){lastKey=null;sync()}
+}
+function initMigrate(){
   db.ref('meta/listsInit').once('value').then(s=>{
     if(s.val()===true)return;
     return db.ref('listMeta').once('value').then(m=>{
@@ -257,13 +278,54 @@ if(DB_URL.indexOf('BURAYA')>=0){
         return db.ref().update(u);
       });
     }).then(()=>db.ref('meta/listsInit').set(true));
-  }).catch(()=>{}).then(()=>{
-    db.ref('listMeta').on('value',snap=>{
-      const v=snap.val()||{};
-      lists=Object.keys(v).map(id=>({id:id,name:String(v[id].name||'Liste'),o:+v[id].o||0})).sort((a,b)=>a.o-b.o);
-      chooseCurrent();
-    },()=>{$('st').textContent='○ Erişim izni yok (Rules ayarını kontrol et)';$('st').className='off'});
+  }).catch(()=>{});
+}
+const AERR={
+  'auth/invalid-credential':'E-posta veya şifre hatalı',
+  'auth/wrong-password':'E-posta veya şifre hatalı',
+  'auth/user-not-found':'E-posta veya şifre hatalı',
+  'auth/invalid-email':'Geçersiz e-posta',
+  'auth/too-many-requests':'Çok fazla deneme, biraz bekle',
+  'auth/network-request-failed':'Bağlantı hatası',
+  'auth/operation-not-allowed':'Firebase\'de E-posta/Şifre girişi açık değil',
+  'auth/user-disabled':'Bu hesap devre dışı'
+};
+$('lgn').onclick=()=>{
+  if(!auth){alert('Veritabanı bağlı değil');return}
+  if(!RO()){auth.signOut();return}
+  $('lerr').textContent='';$('lpw').value='';
+  $('lg').classList.add('on');$('lem').focus();
+};
+$('lx').onclick=()=>$('lg').classList.remove('on');
+function doLogin(){
+  const e=$('lem').value.trim(),p=$('lpw').value;
+  if(!e||!p){$('lerr').textContent='E-posta ve şifre gir';return}
+  $('lok').disabled=true;$('lerr').textContent='';
+  auth.signInWithEmailAndPassword(e,p)
+    .then(()=>{$('lg').classList.remove('on');$('lpw').value=''})
+    .catch(err=>{$('lerr').textContent=AERR[err&&err.code]||'Giriş yapılamadı'})
+    .then(()=>{$('lok').disabled=false});
+}
+$('lok').onclick=doLogin;
+$('lpw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+/* ---------- firebase ---------- */
+if(DB_URL.indexOf('BURAYA')>=0||API_KEY.indexOf('BURAYA')>=0){
+  $('warn').style.display='block';
+  $('tb').innerHTML='<tr><td colspan="8" class="empty">Veritabanı bağlı değil</td></tr>';
+}else{
+  firebase.initializeApp({apiKey:API_KEY,databaseURL:DB_URL});
+  db=firebase.database();auth=firebase.auth();
+  db.ref('.info/connected').on('value',s=>{
+    $('st').textContent=s.val()?'● Canlı':'○ Bağlantı yok';
+    $('st').className=s.val()?'on':'off';
   });
+  db.ref('listMeta').on('value',snap=>{
+    const v=snap.val()||{};
+    lists=Object.keys(v).map(id=>({id:id,name:String(v[id].name||'Liste'),o:+v[id].o||0})).sort((a,b)=>a.o-b.o);
+    chooseCurrent();
+  },()=>{$('st').textContent='○ Okuma izni yok (Rules ayarını kontrol et)';$('st').className='off'});
+  auth.onAuthStateChanged(u=>{applyMode();if(u)initMigrate()});
 }
 
 /* ---------- satır düzenleme ---------- */
@@ -273,46 +335,47 @@ function getRow(el){
   return[tr,rows.find(x=>x.id===tr.dataset.id)];
 }
 $('tb').addEventListener('input',e=>{
-  if(!R)return;
+  if(!R||RO())return;
   const t=e.target,r=getRow(t)[1];if(!r)return;
   const f=t.dataset.f,ref=R.child(r.id);
-  if(f==='pos'||f==='info'){const u={};u[f]=t.value;ref.update(u)}
+  if(f==='pos'||f==='info'){const u={};u[f]=t.value;W(ref.update(u))}
   else if(f==='qty'){
     if(t.value==='')return;
     const q=Math.max(1,Math.round(num(t.value))||1);
-    ref.update({qty:q,d0:Math.min(r.d[0],q),d1:Math.min(r.d[1],q),d2:Math.min(r.d[2],q)});
+    W(ref.update({qty:q,d0:Math.min(r.d[0],q),d1:Math.min(r.d[1],q),d2:Math.min(r.d[2],q)}));
   }else if(f==='w'){
     if(t.value==='')return;
-    ref.update({w:Math.max(0,num(t.value))});
+    W(ref.update({w:Math.max(0,num(t.value))}));
   }else if(t.classList.contains('sin')){
     if(t.value==='')return;
     const s=+t.closest('.sc').dataset.s,u={};
     u['d'+s]=Math.min(r.qty,Math.max(0,Math.round(num(t.value))));
-    ref.update(u);
+    W(ref.update(u));
   }
 });
 $('tb').addEventListener('change',e=>{
   const x=getRow(e.target);if(x[1])paint(x[0],x[1],true);
 });
 $('tb').addEventListener('click',e=>{
-  if(!R)return;
+  if(!R||RO())return;
   const b=e.target.closest('button');if(!b)return;
   const r=getRow(b)[1];if(!r)return;
   if(b.dataset.ok!==undefined){
     const s=+b.dataset.ok,u={};
     u['d'+s]=r.d[s]>=r.qty?0:r.qty;
-    R.child(r.id).update(u);
+    W(R.child(r.id).update(u));
   }else if(b.dataset.del){
     if(!confirm('"'+r.pos+'" silinsin mi? Bu herkesten silinir.'))return;
-    R.child(r.id).remove();
+    W(R.child(r.id).remove());
   }
 });
 $('q').oninput=render;
 $('fl').onchange=render;
 $('add').onclick=()=>{
-  if(!R){alert('Önce bir liste seç ya da oluştur');return}
+  if(!R||RO()){alert('Önce bir liste seç ya da oluştur');return}
   $('q').value='';$('fl').value='all';
   const ref=R.push(toDb({pos:'YENİ',info:'',qty:1,w:0,d:[0,0,0],o:maxO(rows)+1}));
+  W(ref);
   const id=ref.key;
   setTimeout(()=>{
     const tr=$('tb').querySelector('[data-id="'+id+'"]');
@@ -441,7 +504,7 @@ function openImport(){
   $('itgt').value='new';tgtUI();
   $('imd').classList.add('on');
 }
-$('imp').onclick=()=>{if(!db){alert('Veritabanı bağlı değil');return}openImport()};
+$('imp').onclick=()=>{if(!db||RO()){alert('Önce yönetici girişi yap');return}openImport()};
 $('ix').onclick=()=>$('imd').classList.remove('on');
 $('itgt').onchange=tgtUI;
 $('imode').onchange=reparse;
@@ -494,7 +557,7 @@ function rowsObj(list,start,pre){
   return o;
 }
 $('idoit').onclick=()=>{
-  if(!groups.length||!db)return;
+  if(!groups.length||!db||RO())return;
   const stamp=Date.now().toString(36);
   if($('itgt').value==='new'){
     const base=$('iname').value.trim()||'Yeni liste';
@@ -502,15 +565,15 @@ $('idoit').onclick=()=>{
     groups.forEach((g,gi)=>{
       const id='l'+stamp+gi;o++;
       const nm=groups.length>1?base+' - '+(g.name||('Liste '+(gi+1))):base;
-      db.ref('listMeta/'+id).set({name:nm,o:o});
-      db.ref('listRows/'+id).update(rowsObj(g.rows,0,'r'+stamp+'_'));
+      W(db.ref('listMeta/'+id).set({name:nm,o:o}));
+      W(db.ref('listRows/'+id).update(rowsObj(g.rows,0,'r'+stamp+'_')));
       if(!first)first=id;
     });
     pick(first);
   }else if(cur){
     let start=maxO(rows)+1;
     groups.forEach((g,gi)=>{
-      R.update(rowsObj(g.rows,start,'r'+stamp+gi+'_'));
+      W(R.update(rowsObj(g.rows,start,'r'+stamp+gi+'_')));
       start+=g.rows.length;
     });
   }
