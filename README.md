@@ -99,7 +99,7 @@ th.pos{z-index:4;background:#1b1b1b}
 <script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const DB_URL='https://console.firebase.google.com/project/takip-85fe0/database/takip-85fe0-default-rtdb/data/~2F';
+const DB_URL='https://takip-85fe0-default-rtdb.europe-west1.firebasedatabase.app/';
 const ST=['İmalat','Boya','Sevkiyat'],COL=['#378ADD','#BA7517','#1D9E75'];
 
 function parseNum(v){
